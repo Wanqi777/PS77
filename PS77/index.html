@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A N N A // CLONE</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #050505;
+            --text: #ffffff;
+            --accent: #ccff00; /* Neon Volt */
+            --dim: #555555;
+            --font-display: 'Manrope', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-display);
+            overflow-x: hidden;
+            height: 200vh; /* Allow scrolling */
+        }
+
+        /* --- CUSTOM CURSOR --- */
+        .cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+            transition: width 0.3s, height 0.3s;
+        }
+        .cursor.hovered {
+            width: 80px;
+            height: 80px;
+            background: rgba(204, 255, 0, 0.1);
+            border-color: transparent;
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 2rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            mix-blend-mode: exclusion;
+        }
+        .logo { font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; }
+        .menu-item { font-family: var(--font-mono); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* --- HERO SECTION (The Helmet Effect) --- */
+        .hero {
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* The "Face" (Hidden Layer) */
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* PLACEHOLDER IMAGE - Replace with your profile photo */
+            background-image: url('https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=3000&auto=format&fit=crop'); 
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+            filter: grayscale(100%) contrast(1.2);
+        }
+
+        /* The "Visor" (ASCII Canvas) */
+        canvas#ascii-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            /* The canvas draws the black background and ASCII characters */
+        }
+
+        /* Overlay Text */
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            pointer-events: none; /* Let clicks pass through to canvas interactions */
+        }
+
+        h1 {
+            font-size: 12vw;
+            line-height: 0.85;
+            text-transform: uppercase;
+            font-weight: 800;
+            opacity: 0; /* Animated in via GSAP */
+            transform: translateY(50px);
+            mix-blend-mode: exclusion;
+        }
+
+        .meta-data {
+            font-family: var(--font-mono);
+            color: var(--accent);
+            margin-top: 2rem;
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            font-size: 0.9rem;
+            opacity: 0;
+        }
+
+        /* --- MARQUEE --- */
+        .marquee-strip {
+            position: absolute;
+            bottom: 5vh;
+            width: 100%;
+            background: var(--accent);
+            color: var(--bg);
+            padding: 1rem 0;
+            transform: rotate(-2deg) scale(1.1);
+            z-index: 4;
+            overflow: hidden;
+        }
+        .marquee-content {
+            display: flex;
+            white-space: nowrap;
+            animation: scroll 15s linear infinite;
+        }
+        .marquee-content span {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-right: 4rem;
+            text-transform: uppercase;
+        }
+        @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        /* --- FORM OVERLAY (Hidden by default) --- */
+        .interactive-form {
+            position: fixed;
+            bottom: 4rem;
+            right: 4rem;
+            background: rgba(5,5,5,0.8);
+            border: 1px solid var(--dim);
+            padding: 2rem;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+            width: 300px;
+            transform: translateX(150%);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .interactive-form.active {
+            transform: translateX(0);
+        }
+        .form-header {
+            font-family: var(--font-mono);
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+        }
+        input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--dim);
+            color: white;
+            padding: 0.5rem 0;
+            margin-bottom: 1rem;
+            font-family: var(--font-mono);
+            outline: none;
+        }
+        input:focus { border-bottom-color: var(--accent); }
+
+/* --- PROJECTS SECTION --- */
+        .projects-section {
+            padding: 10rem 4rem 4rem 4rem; /* Top padding clears the hero */
+            background-color: var(--bg);
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-header {
+            margin-bottom: 4rem;
+            border-bottom: 1px solid var(--dim);
+            padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .section-header span { font-family: var(--font-mono); color: var(--accent); }
+        .section-header h2 { font-size: 3rem; text-transform: uppercase; }
+
+        .project-item {
+            display: grid;
+            grid-template-columns: 0.5fr 2fr 1fr 1fr;
+            padding: 2rem 0;
+            border-bottom: 1px solid #222;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .project-item:hover {
+            background-color: #111;
+            padding-left: 1rem; /* Indent effect */
+        }
+        
+        /* Hover reveal accent color */
+        .project-item:hover .p-name { color: var(--accent); }
+        .project-item:hover .p-status { opacity: 1; }
+
+        .p-index { font-family: var(--font-mono); color: var(--dim); }
+        .p-name { font-size: 2rem; font-weight: 800; text-transform: uppercase; transition: color 0.3s; }
+        .p-cat { font-family: var(--font-mono); color: #888; text-transform: uppercase; }
+        .p-status { font-family: var(--font-mono); color: var(--accent); opacity: 0; text-align: right; transition: opacity 0.3s; }
+
+        /* --- MODAL (OVERLAY) --- */
+        .project-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            padding: 4rem;
+            transform: translateY(100%); /* Hidden at bottom */
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-y: auto; /* Allow scrolling inside modal */
+        }
+
+        .project-modal.open { transform: translateY(0); }
+
+        .close-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 0.5rem 1rem;
+            font-family: var(--font-mono);
+            font-weight: bold;
+            cursor: none; /* Keep custom cursor */
+        }
+        .close-btn:hover { background: var(--accent); color: var(--bg); }
+
+        .modal-content { max-width: 1200px; margin: 0 auto; width: 100%; margin-top: 4rem; }
+        .modal-content h2 { font-size: 5rem; line-height: 1; margin-bottom: 1rem; text-transform: uppercase; color: white; }
+        .modal-meta { font-family: var(--font-mono); color: var(--accent); margin-bottom: 2rem; font-size: 1.2rem; }
+        .modal-desc { max-width: 600px; line-height: 1.6; color: #ccc; margin-bottom: 4rem; }
+
+        .modal-gallery {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        .modal-img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            filter: none;
+            border: 1px solid #333;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+        .modal-img:hover { filter: grayscale(0%); }
+        
+    </style>
+</head>
+<body>
+
+    <div class="cursor" id="cursor"></div>
+
+    <nav>
+        <div class="logo">AW // 2026</div>
+        <div class="menu-item">[ PORFOLIO ]</div>
+    </nav>
+
+    <div class="hero">
+        <div class="hero-bg"></div>
+        <canvas id="ascii-mask"></canvas>
+        
+        <div class="hero-content">
+            <h1>ANNA WU<br>Profile</h1>
+            <div class="meta-data">
+                <span>// EST. 2022-2026</span>
+                <span>// DESIGNER</span>
+                <span>// INTERACTIVE</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="marquee-strip">
+        <div class="marquee-content">
+            <span>Interactive Designer ///</span>
+            <span>Art Greek ///</span>
+            <span>UIUX ///</span>
+            <span>Web Art ///</span>
+            <span>Photographer ///</span>
+            <span>Storytellor ///</span>
+            <span>AIGC ///</span>
+            <span>... ///</span>
+        </div>
+    </div>
+
+    <div class="interactive-form" id="sideForm">
+        <div class="form-header">/// CONTACT ME</div>
+        <div class="contact-info" style="font-family: var(--font-mono); font-size: 1rem; color: white; margin-bottom: 0.5rem;">
+            @ANNA WU
+        </div>
+        <div class="contact-info" style="font-family: var(--font-mono); font-size: 1rem; color: white;">
+            18013544959@163.com
+        </div>
+    </div>
+
+    <section style="padding: 6rem 4rem; display: grid; grid-template-columns: 1fr 2fr; gap: 4rem;">
+        <div class="reveal-text">
+            <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">// INTRO</h2>
+            <p style="color: var(--dim);">ANNA 吴皖琪</p>
+            <div style="width: 300px; height: 300px; margin-top: 1rem; border: 1px solid var(--dim);">
+                <img src="ANNA.png" alt="ANNA" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+        </div>
+        <div class="reveal-text" style="transition-delay: 0.1s;">
+            <p style="font-size: 2rem; line-height: 1.4; font-family: var(--font-sans);">
+                Zhejiang University | Art and Technology  |  Reddot Award Design Concept 2025  |  
+                International College Students Innovation Competition - Gold Medal  |  
+                CCCC  MAIC - First Prize  |
+                UXDA - Third Prize  |  
+                Zhejiang University Scholarship, Outstanding Student 2022-2023, 2023-2024, 2024-2025 Academic Years
+                Bosch - Design Intern 2024.6 - 2024.9  |  Alibaba - Design Intern 2025.6
+            </p>
+        </div>
+    </section>
+
+<section class="projects-section">
+        <div class="section-header">
+            <span>// ARCHIVE_2024-2025</span>
+            <h2>SELECTED MISSIONS</h2>
+        </div>
+
+        <div class="project-list">
+            <div class="project-item" onclick="openProject(1)">
+                <div class="p-index">01</div>
+                <div class="p-name">LAPLACE</div>
+                <div class="p-cat">WEBART / WORLDBUILDING</div>
+                <div class="p-status">[ VIEW_MORE ]</div>
+            </div>
+
+            <div class="project-item" onclick="openProject(2)">
+                <div class="p-index">02</div>
+                <div class="p-name">HOME WITHOUT ENTRANCE</div>
+                <div class="p-cat">IMMERSIVE / PROJECTION</div>
+                <div class="p-status">[ VIEW_MORE ]</div>
+            </div>
+
+            <div class="project-item" onclick="openProject(3)">
+                <div class="p-index">03</div>
+                <div class="p-name">MUSHAPPY</div>
+                <div class="p-cat">SPECULATIVE / BRANDING</div>
+                <div class="p-status">[ VIEW_MORE ]</div>
+            </div>
+
+            <div class="project-item" onclick="openProject(4)">
+                <div class="p-index">04</div>
+                <div class="p-name">FIVE TONES RESONACE</div>
+                <div class="p-cat">SOUND VIZ / INSTALLATION</div>
+                <div class="p-status">[ VIEW_MORE ]</div>
+            </div>
+
+            <div class="project-item" onclick="openProject(5)">
+                <div class="p-index">05</div>
+                <div class="p-name">NVWA</div>
+                <div class="p-cat">UIUX / 3D / SERVICE DESIGN</div>
+                <div class="p-status">[ VIEW_MORE ]</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="project-modal" id="projectModal">
+        <button class="close-btn" onclick="closeProject()">[ CLOSE_TERMINAL ]</button>
+        
+        <div class="modal-content">
+            <h2 id="modalTitle" class="glitch-text">PROJECT NAME</h2>
+            <div class="modal-meta">
+                <span id="modalCat">CATEGORY</span> // <span id="modalYear">2024</span>
+            </div>
+            
+            <p id="modalDesc" class="modal-desc">
+                Project description data loading...
+            </p>
+
+            <div class="modal-gallery" id="modalGallery">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. SETUP ---
+        const cursor = document.getElementById('cursor');
+        const canvas = document.getElementById('ascii-mask');
+        const ctx = canvas.getContext('2d');
+        const form = document.getElementById('sideForm');
+
+        let width, height;
+        let mouse = { x: -1000, y: -1000 };
+        let targetMouse = { x: -1000, y: -1000 };
+
+        // --- 2. RESIZE HANDLER ---
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            // High DPI fix
+            // ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- 3. CURSOR & INTERACTION LOGIC ---
+        document.addEventListener('mousemove', (e) => {
+            targetMouse.x = e.clientX;
+            targetMouse.y = e.clientY;
+            
+            // Show form when moving fast or to the right side (Simulation of interaction)
+            if (e.clientX > window.innerWidth * 0.7) {
+                form.classList.add('active');
+            } else {
+                form.classList.remove('active');
+            }
+
+            // Custom cursor styling on hoverables
+            const target = e.target;
+            if (target.tagName === 'A' || target.tagName === 'INPUT' || target.tagName === 'BUTTON') {
+                cursor.classList.add('hovered');
+            } else {
+                cursor.classList.remove('hovered');
+            }
+        });
+
+        // Smooth cursor animation
+        function updateCursor() {
+            // Linear interpolation (lerp) for smooth lag
+            mouse.x += (targetMouse.x - mouse.x) * 0.1;
+            mouse.y += (targetMouse.y - mouse.y) * 0.1;
+
+            cursor.style.left = mouse.x + 'px';
+            cursor.style.top = mouse.y + 'px';
+
+            requestAnimationFrame(updateCursor);
+        }
+        updateCursor();
+
+        // --- 4. ASCII "MASK" ENGINE ---
+        // The goal: Draw a grid of ASCII characters.
+        // Near the mouse, the characters disappear/shrink to reveal the background image.
+
+        const cols = 80; // Density of columns
+        const charSet = "xyz01_"; // Tech-style characters
+        
+        function drawAsciiMask() {
+            // 1. Clear with semi-transparent black for trails, or solid for sharp
+            ctx.clearRect(0, 0, width, height);
+            
+            // 2. Fill background with dark overlay
+            // We want the image to be hidden by default, so we draw a dark rect
+            // But we will punch a hole in it using 'destination-out' compositing or just math.
+            
+            ctx.fillStyle = "#050505";
+            ctx.fillRect(0, 0, width, height);
+
+            // 3. Draw ASCII Grid
+            const cellW = width / cols;
+            const cellH = cellW * 1.6; // Aspect ratio for monospace char
+            const rows = Math.ceil(height / cellH);
+
+            ctx.font = `${cellW}px "Space Mono"`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    const x = i * cellW + cellW/2;
+                    const y = j * cellH + cellH/2;
+
+                    // Calculate distance to mouse
+                    const dx = x - mouse.x;
+                    const dy = y - mouse.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    // The "Helmet Visor" effect:
+                    // If dist is small (near mouse), we DON'T draw the block (revealing bg).
+                    // Or we draw it smaller/transparent.
+                    
+                    const visionRadius = 250;
+                    
+                    if (dist < visionRadius) {
+                        // REVEAL LOGIC:
+                        // Calculate opacity based on distance from center of cursor
+                        const opacity = Math.max(0, (dist / visionRadius) - 0.2); // -0.2 to make center fully clear
+                        
+                        if (opacity > 0) {
+                            ctx.fillStyle = `rgba(50, 255, 0, ${opacity})`; // Green text near edge
+                            // Random changing characters for "decoding" effect
+                            const charIndex = Math.floor(Math.random() * charSet.length);
+                            ctx.fillText(charSet[charIndex], x, y);
+                        }
+                    } else {
+                        // HIDDEN LOGIC:
+                        // Draw solid ASCII pattern
+                        ctx.fillStyle = "rgba(40, 40, 40, 1)"; // Dark grey text
+                        // Use a static character for stability or generated
+                        // To make it look like a mask shape, we can use specific chars
+                        const char = ((i + j) % 2 === 0) ? "+" : "·";
+                        ctx.fillText(char, x, y);
+                    }
+                }
+            }
+            
+            requestAnimationFrame(drawAsciiMask);
+        }
+
+        // Start the engine
+        drawAsciiMask();
+
+        // --- 5. INTRO ANIMATIONS ---
+        // Reveal elements elegantly on load
+        window.onload = () => {
+            const tl = gsap.timeline();
+            
+            tl.to("h1", {
+                opacity: 1,
+                y: 0,
+                duration: 1.5,
+                ease: "power4.out",
+                stagger: 0.1
+            })
+            .to(".meta-data", {
+                opacity: 1,
+                duration: 1
+            }, "-=1");
+        };
+
+// --- 6. PROJECT DATA & MODAL LOGIC ---
+        
+        // Data Store: Define your 5 projects here
+        const projects = [
+            {
+                id: 1,
+                title: "LAPLACE",
+                category: "WEBART / WORLDBUILDING",
+                year: "2025",
+                desc: "<a href='https://wanqi777.github.io/Laplace/Laplace%20Web/Laplace.html' target='_blank' style='color: var(--accent); text-decoration: underline;'>https://wanqi777.github.io/Laplace/Laplace%20Web/Laplace.html</a>",
+                images: [
+                    "WanqiWU_00.png"
+                ]
+            },
+            {
+                id: 2,
+                title: "HOME WITHOUT ENTRANCE",
+                category: "IMMERSIVE / PROJECTION",
+                year: "2025",
+                desc: "<p><a href='https://youtu.be/4VlOqBuPj50?feature=shared' target='_blank' style='color: var(--accent); font-size: 1.2rem; font-weight: bold; text-decoration: underline; padding: 0.5rem 1rem; background-color: rgba(255, 0, 0, 0.1); border-radius: 4px; margin-right: 1rem; display: inline-block;'>YouTube1</a></p><p><a href='https://youtu.be/MjaPCExhYY0?si=Myiiv5Uh4vzlrTir' target='_blank' style='color: var(--accent); text-decoration: underline;'>YouTube2</a></p>",
+                images: [
+                    "WanqiWU_01.png"
+                ]
+            },
+            {
+                id: 3,
+                title: "MUSHAPPY",
+                category: "SPECULATIVE / BRANDING",
+                year: "2024",
+                desc: ".",
+                images: [
+                    "WanqiWU_02.png"
+                ]
+            },
+            {
+                id: 4,
+                title: "FIVE TONES RESONACE",
+                category: "SOUND VIZ / INSTALLATION",
+                year: "2024",
+                desc: ".",
+                images: [
+                    "WanqiWU_03.png"
+                ]
+            },
+            {
+                id: 5,
+                title: "NVWA",
+                category: "UIUX / 3D / SERVICE DESIGN",
+                year: "2024",
+                desc: ".",
+                images: [
+                    "WanqiWU_04.png"
+                ]
+            }
+        ];
+
+        const modal = document.getElementById('projectModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalCat = document.getElementById('modalCat');
+        const modalYear = document.getElementById('modalYear');
+        const modalDesc = document.getElementById('modalDesc');
+        const modalGallery = document.getElementById('modalGallery');
+
+        function openProject(id) {
+            // 1. Find the project data
+            const project = projects.find(p => p.id === id);
+            if (!project) return;
+
+            // 2. Populate text
+            modalTitle.innerText = project.title;
+            modalCat.innerText = project.category;
+            modalYear.innerText = project.year;
+            modalDesc.innerHTML = project.desc;
+
+            // 3. Populate images (Clear old ones first)
+            modalGallery.innerHTML = '';
+            project.images.forEach(imgUrl => {
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.className = 'modal-img';
+                modalGallery.appendChild(img);
+            });
+
+            // 4. Show Modal
+            modal.classList.add('open');
+            
+            // 5. Optional GSAP Entrance animation for content
+            gsap.fromTo(".modal-content > *", 
+                { y: 50, opacity: 0 },
+                { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, delay: 0.3 }
+            );
+        }
+
+        function closeProject() {
+            modal.classList.remove('open');
+        }
+
+
+    </script>
+</body>
+</html>
